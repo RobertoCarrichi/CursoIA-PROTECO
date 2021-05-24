@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -113,7 +113,77 @@ def depthFirstSearch(problem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
+
+    ruta = util.Stack()
+    ruta.push((problem.getStartState(), "", 0))
+
+    # Un nodo tendra la siguiente estructura:
+    #
+    #       ((5,5), "DIRECTION", 0)
+    #
+    # [0] = POSITION
+    # [1] = DIRECTION
+    # [2] = COST
+
+    # Arreglo que contiene los nodos ya visitados. Se almacenan SOLO COORDENADAS.
+    expanded = []
+    # Arreglo que tendra el camino a seguir para que pacman llegue a la meta.
+    # El contenido del arreglo tiene la siguiente estructura.
+    #       [ ( (<Coordenadas>), <Accion>) ]
+    # En donde:
+    # Coordenadas = El nodo al que debe dirigirse.
+    # Accion = En que direccion debe de moverse.
+    directions = []
+    while not ruta.isEmpty():
+        actual_node = ruta.pop()
+        directions.append((actual_node[0], actual_node[1]))
+        if problem.isGoalState(actual_node[0]):
+            # Si llega a la posicion objetivo termina el programa.
+            # Se debe eliminar el primer nodo visitado, ya que este no tiene ninguna direccion.
+            directions.pop(0)
+            # Para enviar las direcciones solo sera necesario almacenar las ACCIONES, 
+            # entonces los nodos a los que se mueve ya no son necesarios.
+            directions = [direction[1] for direction in directions]
+            return directions
+        # Ya que no es la meta, se necesita de los hijos a los que puede avanzar el nodo actual.
+        hijos = problem.expand(actual_node[0])
+        if actual_node[0] not in expanded:
+            # Se agregan los nodos de la posicion actual a la pila.
+            for hijo in hijos:
+                ruta.push(hijo)
+            # La posicion actual se almacena en los nodos visitados. 
+            expanded.append(actual_node[0]) 
+        else:
+            # El nodo ya ha sido expandido.
+            # Como el nodo ya fue visitado, este debera eliminarse de las direcciones.
+            directions.pop()
+            # Se verifica si en la nueva posicion Pacman necesita retroceder.
+            while True:
+                # Se obtiene la ultima direccion que tomo.
+                last_node = directions[-1]
+                # Se obtienen los hijos de ese ultimo paso
+                children = problem.expand(last_node[0])
+                # Se verifica si requiere que pacman retroceda.
+                backtrack = needBacktrack(last_node[0], children, expanded) 
+                # Si necesita volver, elimina la direccion, si no, sigue avanzando.
+                if backtrack:
+                    directions.pop()
+                else:
+                    break 
     util.raiseNotDefined()
+
+def needBacktrack(node, children, expanded):
+    # El objetivo de esta funcion es para determinar 
+    # si el nodo actual aun tiene hijos sin visitar.
+    ###################################################
+
+    # True  = Si ya ha visitado a todos sus hijos. (NECESITA RETROCEDER)
+    # False = Pacman aun tiene alternativas para poder avanzar. (NO NECESITA RETROCEDER)
+
+    for num_hijo in range(0,len(children),1):
+        if children[num_hijo][0] not in expanded:
+            return False 
+    return True
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
