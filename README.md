@@ -7,7 +7,7 @@
 
 
 ## Lo que se debe hacer
-
+Aún falta la implementación del algoritmo de Breath First Search.
 
 ## Lo necesario del sistema
 Todo el sistema se encuentra en Python 3 
