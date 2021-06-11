@@ -100,20 +100,6 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
-    """
-    Search the deepest nodes in the search tree first.
-
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
-
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
-
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    """
-    "*** YOUR CODE HERE ***"
-
     ruta = util.Stack()
     ruta.push((problem.getStartState(), "", 0))
 
@@ -133,18 +119,18 @@ def depthFirstSearch(problem):
     # En donde:
     # Coordenadas = El nodo al que debe dirigirse.
     # Accion = En que direccion debe de moverse.
-    directions = []
+    toVisit = []
     while not ruta.isEmpty():
         actual_node = ruta.pop()
-        directions.append((actual_node[0], actual_node[1]))
+        toVisit.append((actual_node[0], actual_node[1]))
         if problem.isGoalState(actual_node[0]):
             # Si llega a la posicion objetivo termina el programa.
             # Se debe eliminar el primer nodo visitado, ya que este no tiene ninguna direccion.
-            directions.pop(0)
+            toVisit.pop(0)
             # Para enviar las direcciones solo sera necesario almacenar las ACCIONES, 
             # entonces los nodos a los que se mueve ya no son necesarios.
-            directions = [direction[1] for direction in directions]
-            return directions
+            toVisit = [direction[1] for direction in toVisit]
+            return toVisit
         # Ya que no es la meta, se necesita de los hijos a los que puede avanzar el nodo actual.
         hijos = problem.expand(actual_node[0])
         if actual_node[0] not in expanded:
@@ -156,18 +142,18 @@ def depthFirstSearch(problem):
         else:
             # El nodo ya ha sido expandido.
             # Como el nodo ya fue visitado, este debera eliminarse de las direcciones.
-            directions.pop()
+            toVisit.pop()
             # Se verifica si en la nueva posicion Pacman necesita retroceder.
             while True:
                 # Se obtiene la ultima direccion que tomo.
-                last_node = directions[-1]
+                last_node = toVisit[-1]
                 # Se obtienen los hijos de ese ultimo paso
                 children = problem.expand(last_node[0])
                 # Se verifica si requiere que pacman retroceda.
                 backtrack = needBacktrack(last_node[0], children, expanded) 
                 # Si necesita volver, elimina la direccion, si no, sigue avanzando.
                 if backtrack:
-                    directions.pop()
+                    toVisit.pop()
                 else:
                     break 
     util.raiseNotDefined()
@@ -186,9 +172,56 @@ def needBacktrack(node, children, expanded):
     return True
 
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
+    toVisit = util.Queue()
+    toVisit.push((problem.getStartState(), "", 0))
+
+    # Coleccion con todos los nodos visitados y por visitar, cada uno de sus elementos contendra 2 valores:
+    # - El nodo en cuestion.
+    # - Su nodo padre.
+    visited = []
+    while not toVisit.isEmpty():
+        actual_node = toVisit.pop()
+        visited.append(actual_node)
+        if problem.isGoalState(actual_node[0]):
+            ######################################
+            # PROCESO DE CONSTRUCCION DE LA RUTA #
+            ######################################
+            # Estrategia: Encontrar recursivamente el padre de cada nodo y agregarlo a las direcciones.
+            directions = []
+            # Se coloca la ultima accion tomada al final de la lista.
+            directions.append(actual_node[1])
+            # Se genera una variable con un contenido random para que realice el primer ciclo.
+            direction = "Fist direction"
+            # Se toma en cuenta que el primer nodo visitado tiene una accion nula (""), dado esto, si se llega a esa la recursividad debe detenerse.
+            while direction != "":
+                # Se obtiene el nodo padre del nodo actual.
+                # Este SIEMPRE EXISTIRA, ya que se busca en una coleccion que contiene todoslos nodos visitados o por visitar.
+                father = getFather(visited, actual_node)
+                # Ya que es recursivo el proceso, la direccion del padre debe ir al comienzo de la coleccion, justo como el funcionamiento de una cola.
+                directions.insert(0, father[1])
+                # Se actualiza el valor de la accion con la del nodo padre.
+                direction = father[1]
+                # Se modifica el 'nodo actual' para que se genere la recursividad.
+                actual_node = father
+            # Se elimina la primera direccion de todas, pues esta significa que llego al punto inicial del problema.
+            directions.pop(0)
+            return directions
+        else:
+            children = problem.expand(actual_node[0])
+            for child in children:
+                # Cada hijo se busca en una sublista de nodos que NO TIENE los nodos padre.
+                if child not in [node[0] for node in visited]:
+                    # Cada uno de estos nodos se agregan a la coleccion que tiene los nodos que seran visitados proximamente.
+                    toVisit.push(child)
+                    # Los hijos que seran visitados se guardaran a la lista de todos los nodos incluyendo su nodo padre.
+                    visited.append((child, actual_node))
     util.raiseNotDefined()
+
+def getFather(visited, actual_node):
+    # Funcion destinada a encontrar el nodo padre de un nodo dado. Este siempre va a retornar un nodo ya que el padre siempre se va a encontrar dentro de la lista de nodos visitados.
+    for node in visited:
+        if actual_node == node[0]:
+            return node[1]
 
 def nullHeuristic(state, problem=None):
     """
